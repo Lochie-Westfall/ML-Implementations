@@ -30,7 +30,7 @@ class policy_network ():
             self.distribution = tf.distributions.Normal(loc=loc, scale=scale)
         self.sample = tf.squeeze(self.distribution.sample(1),[0,1])
     
-    def select_action (self, state):
+    def get_action (self, state):
         return  self.sess.run(self.sample, {self.layers[0]:state})
         
 def create_neural_net (net_input, structure):
