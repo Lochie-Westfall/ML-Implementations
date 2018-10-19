@@ -1,9 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Thu Oct 18 11:35:53 2018
+Implementation of Proximal Policy Optimization by Lochie Westfall
 
-@author: Lochie
+Original Paper:
+Proximal Policy Optimization Algorithms
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov
+OpenAI
+
+The comments in the code reference the part of the paper they represent
 """
 
 import tensorflow as tf
