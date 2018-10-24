@@ -14,7 +14,7 @@ import networks
 
 gamma = 0.9
 epsilon = 0.2
-learning_rate = 0.00001
+learning_rate = 0.0001
 train_steps = 10
 
 class ppo ():
@@ -25,7 +25,7 @@ class ppo ():
         self.reward = tf.placeholder(tf.float32, [None, 1])
         self.advantage_in = tf.placeholder(tf.float32, [None, 1])
         
-        self.value_layers = networks.create_neural_net(self.state, value_struct)
+        self.value_layers = networks.create_neural_net(self.state, value_struct, True)
         self.policy = networks.policy_network(self.state, policy_struct, "policy", True)
         self.old_policy = networks.policy_network(self.state, policy_struct, "old_policy", False)
         
@@ -35,7 +35,7 @@ class ppo ():
         self.advantage = self.reward - self.v
         
         self.critic_loss = tf.reduce_mean(tf.square(self.advantage))
-        self.critic_train = tf.train.AdamOptimizer(learning_rate*2).minimize(self.critic_loss)
+        self.critic_train = tf.train.AdamOptimizer(learning_rate).minimize(self.critic_loss)
         
         # Chapter 3 line 1
         self.ratio = self.policy.distribution.prob(self.action) / self.old_policy.distribution.prob(self.action)

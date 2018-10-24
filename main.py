@@ -42,24 +42,27 @@ for episode in range(episodes):
     done = False
     while not done:
       i += 1
-      env.render()
+      if episode > episodes/2:
+          env.render()
 
-      action = algorithm.get_action([state])[0]
+      action = algorithm.get_action([state])
       #print(action)
-      state, reward, done, info = env.step(action)
+      state_p, reward, done, info = env.step(action)
       
       episode_reward += reward
       states.append(state)
-      rewards.append([(reward)])
-      actions.append([action])
+      rewards.append([(reward+8)/8])
+      actions.append(action)
       
-      if done or ((i % batch_size == 0 or i == episode_length-1)):
+      state = state_p
+      
+      if done:
           rewards = algorithm.discount_rewards(rewards, [state])
-          algorithm.train(states, actions, rewards)
+          algorithm.train(np.vstack(states), np.vstack(actions), rewards)
           
           states = []
           rewards = []
           actions = []
-    if episode%1 == 0:
+    if episode>0 and episode%1 == 0:
         print(episode, " ", episode_reward/1)
         episode_reward = 0
