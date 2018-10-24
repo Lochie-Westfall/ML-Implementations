@@ -26,7 +26,7 @@ class policy_network ():
         
     def create_network (self):
         with tf.variable_scope(self.name):
-            self.layers = create_neural_net(self.net_input, self.structure)
+            self.layers = create_neural_net(self.net_input, self.structure, self.trainable)
             
             loc = 2 * tf.layers.dense(self.layers[-1], self.structure[-1], tf.nn.tanh, trainable=self.trainable)
             scale = tf.layers.dense(self.layers[-1], self.structure[-1], tf.nn.softplus, trainable=self.trainable)
@@ -34,14 +34,15 @@ class policy_network ():
         self.sample = tf.squeeze(self.distribution.sample(1),[0,1])
     
     def get_action (self, state):
+        #outputs nan
         return  self.sess.run(self.sample, {self.layers[0]:state})
         
-def create_neural_net (net_input, structure):
+def create_neural_net (net_input, structure, trainable=True):
         layers = []
         layers.append(net_input)
         
         for i in range(1,len(structure)):
-            layers.append(tf.layers.dense(layers[-1], structure[i]))
+            layers.append(tf.layers.dense(layers[-1], structure[i], tf.nn.relu, trainable=trainable))
         
         return layers
 

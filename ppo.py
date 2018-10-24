@@ -14,7 +14,7 @@ import networks
 
 gamma = 0.9
 epsilon = 0.2
-learning_rate = 1e-5
+learning_rate = 0.00001
 train_steps = 10
 
 class ppo ():
@@ -23,10 +23,11 @@ class ppo ():
         self.state = tf.placeholder(tf.float32, [None, policy_struct[0]])
         self.action = tf.placeholder(tf.float32, [None, policy_struct[-1]])
         self.reward = tf.placeholder(tf.float32, [None, 1])
+        self.advantage_in = tf.placeholder(tf.float32, [None, 1])
         
         self.value_layers = networks.create_neural_net(self.state, value_struct)
         self.policy = networks.policy_network(self.state, policy_struct, "policy", True)
-        self.old_policy = networks.policy_network(self.state, policy_struct, "old_policy", True)
+        self.old_policy = networks.policy_network(self.state, policy_struct, "old_policy", False)
         
         self.v = self.value_layers[-1]
         
@@ -34,13 +35,13 @@ class ppo ():
         self.advantage = self.reward - self.v
         
         self.critic_loss = tf.reduce_mean(tf.square(self.advantage))
-        self.critic_train = tf.train.AdamOptimizer(learning_rate).minimize(self.critic_loss)
+        self.critic_train = tf.train.AdamOptimizer(learning_rate*2).minimize(self.critic_loss)
         
         # Chapter 3 line 1
         self.ratio = self.policy.distribution.prob(self.action) / self.old_policy.distribution.prob(self.action)
         
         # (7)
-        self.actor_loss = -tf.reduce_mean(tf.minimum(self.advantage*self.ratio, self.advantage*tf.clip_by_value(self.ratio, 1-epsilon, 1+epsilon)))
+        self.actor_loss = -tf.reduce_mean(tf.minimum(self.advantage_in*self.ratio, self.advantage_in*tf.clip_by_value(self.ratio, 1-epsilon, 1+epsilon)))
         
         self.actor_train = tf.train.AdamOptimizer(learning_rate).minimize(self.actor_loss)
         
@@ -54,18 +55,20 @@ class ppo ():
         self.sess.run(self.assign_old)
         # Algorithm 1 line 6 "Optimize surrogate L wrt θ, with K epochs and minibatch size M ≤ NT"
         for _ in range(train_steps):
-            self.sess.run(self.actor_train, {self.state:state, self.action:action, self.reward:reward})
+            advantage = self.sess.run(self.advantage, {self.state:state, self.reward:reward})
+            self.sess.run(self.actor_train, {self.state:state, self.action:action, self.advantage_in:advantage})
             self.sess.run(self.critic_train, {self.state:state, self.reward:reward})
     
     def get_action (self, state):
         return self.policy.get_action(state)
     
     def get_v (self, state):
-        return self.sess.run(self.v, {self.state:state})
+        return self.sess.run(self.v, {self.state:state})[0,0]
     
-    def discount_rewards (self, rewards):
+    def discount_rewards (self, rewards, state):
         discounted_rewards = []
-        v = 0
+        
+        v = self.get_v(state)
         for r in reversed(rewards):
             v = r[0] + gamma * v
             discounted_rewards.append([v])
