@@ -10,6 +10,7 @@ The comments in the code reference the part of the paper they represent
 """
 
 import tensorflow as tf
+import numpy as np
 import networks
 
 gamma = 0.9
@@ -70,9 +71,12 @@ class ppo ():
         
         v = self.get_v(state)
         for r in reversed(rewards):
-            v = r[0] + gamma * v
-            discounted_rewards.append([v])
+            v = r + gamma * v
+            discounted_rewards.append(v)
         discounted_rewards.reverse()
+        
+        discounted_rewards = [(reward - np.mean(rewards))/abs(np.mean(rewards)) for reward in rewards]
+        
         return discounted_rewards
         
         

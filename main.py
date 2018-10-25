@@ -13,9 +13,12 @@ import ppo
 import gym
 import tensorflow as tf
 import numpy as np
+#import Box2D
+
+from sys import platform
 
 batch_size = 32
-episodes = 10000
+episodes = 100000
 episode_length = 1000
 
 sess = tf.Session().__enter__()
@@ -24,7 +27,9 @@ env = gym.make("Pendulum-v0")
 state = env.reset()
 
 action_size = env.action_space.sample()
-action_size = len(action_size if (type(action_size)==list) else [action_size])
+action_size = len(action_size if (type(action_size)==np.ndarray) else [action_size])
+
+
 
 value_struct = [len(state), 100, 1]
 policy_struct = [len(state), 100, action_size]
@@ -38,27 +43,28 @@ episode_reward = 0
 
 for episode in range(episodes):
     state = env.reset()
-    i = 0
     done = False
     while not done:
-      i += 1
-      if episode > episodes/2:
+      
+      # Improves training speed
+      if episode > episodes/2 or platform == "darwin":
           env.render()
-
+          
       action = algorithm.get_action([state])
-      #print(action)
+
       state_p, reward, done, info = env.step(action)
       
-      episode_reward += reward
       states.append(state)
-      rewards.append([(reward+8)/8])
       actions.append(action)
+      rewards.append(reward)     
       
       state = state_p
       
       if done:
+          episode_reward += sum(rewards)
           rewards = algorithm.discount_rewards(rewards, [state])
-          algorithm.train(np.vstack(states), np.vstack(actions), rewards)
+          
+          algorithm.train(np.vstack(states), np.vstack(actions), np.array(rewards)[:, np.newaxis])
           
           states = []
           rewards = []
