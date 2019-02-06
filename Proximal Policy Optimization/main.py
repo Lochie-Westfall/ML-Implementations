@@ -50,39 +50,39 @@ print_freq = 100
 for episode in range(episodes):
     state = env.reset()
     done = False
-    if episode>0:
+    if episode > 0:
         # Replace previous episode data print with current episode data 
         sys.stdout.write("\r" + "episode {} reward: {} \r".format(episode, all_reward[-1]))
         sys.stdout.flush()
-    
+
     episode_reward = 0
-    
+
     while not done:
-      # Only render "render_amt" episodes for every "render_freq" episodes or when on macOS
-      # Improves performance
-      if episode % render_freq < render_amt or episode > episodes * 0.9 or sys.platform == "darwin":
-          env.render()
-      
-      action = algorithm.get_action([state])
-      state_p, reward, done, info = env.step(action)
-      
-      states.append(state)
-      actions.append(action)
-      rewards.append(reward) 
-      state = state_p
-      
-      if done:
-          all_reward.append(sum(rewards))  
-          moving_avg_reward.append(sum(rewards)*0.1+moving_avg_reward[-1]*0.9 if episode > 0 else sum(rewards))
-              
-          rewards = algorithm.discount_and_normalize(rewards)
-          # Train the ppo algorithm with the information in the buffers
-          algorithm.train(np.vstack(states), np.vstack(actions), np.array(rewards)[:, np.newaxis])
-          # Empty the buffers
-          states = []
-          rewards = []
-          actions = []
-      
+        # Only render "render_amt" episodes for every "render_freq" episodes or when on macOS
+        # Improves performance
+        if episode % render_freq < render_amt or episode > episodes * 0.9 or sys.platform == "darwin":
+            env.render()
+
+        action = algorithm.get_action([state])
+        state_p, reward, done, info = env.step(action)
+
+        states.append(state)
+        actions.append(action)
+        rewards.append(reward)
+        state = state_p
+
+        if done:
+            all_reward.append(sum(rewards))
+            moving_avg_reward.append(sum(rewards) * 0.1 + moving_avg_reward[-1] * 0.9 if episode > 0 else sum(rewards))
+
+            rewards = algorithm.discount_and_normalize(rewards)
+            # Train the ppo algorithm with the information in the buffers
+            algorithm.train(np.vstack(states), np.vstack(actions), np.array(rewards)[:, np.newaxis])
+            # Empty the buffers
+            states = []
+            rewards = []
+            actions = []
+
     if episode > 0 and episode % print_freq == 0:
         reward_list = all_reward[-print_freq:-1]
         print("\nmean: {} std: {}".format(np.mean(reward_list), np.std(reward_list)))
