@@ -49,12 +49,13 @@ for episode in range(episodes):
     state = env.reset()
 
     while not done:
-        env.render()
-        action = sess.run(neural_net, {state_input: [state]})[0][0]
+#        env.render()
+        action = sess.run(neural_net, {state_input: [state]})[0, 0]
         state, reward, done, info = env.step(1 if action > 0 else 0)
         episode_reward += reward
 
-    print(episode, ": ", episode_reward)
+    if episode % 1 == 0:
+        print(episode, ": ", episode_reward)
     if episode_reward >= best_reward:
         best_reward = episode_reward
         sess.run(update_best_variables)
